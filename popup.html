@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phishing Detector</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            width: 380px;
+            min-height: 500px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            overflow-x: hidden;
+        }
+
+        /* Animated background elements */
+        .bg-decoration {
+            position: fixed;
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .bg-orb {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            animation: float 6s ease-in-out infinite;
+        }
+
+        .bg-orb:nth-child(1) {
+            top: -50px;
+            left: -50px;
+            animation-delay: 0s;
+        }
+
+        .bg-orb:nth-child(2) {
+            bottom: -30px;
+            right: -30px;
+            animation-delay: -3s;
+            width: 80px;
+            height: 80px;
+        }
+
+        .bg-orb:nth-child(3) {
+            top: 50%;
+            left: -40px;
+            animation-delay: -1.5s;
+            width: 60px;
+            height: 60px;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); opacity: 0.3; }
+            50% { transform: translateY(-20px) rotate(180deg); opacity: 0.6; }
+        }
+
+        /* Header */
+        .header {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 20px;
+            text-align: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .logo {
+            width: 50px;
+            height: 50px;
+            margin: 0 auto 15px;
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); box-shadow: 0 0 20px rgba(255, 255, 255, 0.3); }
+            50% { transform: scale(1.05); box-shadow: 0 0 30px rgba(255, 255, 255, 0.5); }
+        }
+
+        .app-title {
+            font-size: 18px;
+            font-weight: 700;
+            margin: 0 0 5px 0;
+        }
+
+        .version {
+            font-size: 12px;
+            opacity: 0.8;
+        }
+
+        /* Current site status */
+        .current-site {
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .site-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 15px;
+        }
+
+        .status-indicator {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: bold;
+            animation: statusPulse 2s ease-in-out infinite;
+        }
+
+        .status-safe {
+            background: linear-gradient(45deg, #4CAF50, #8BC34A);
+            box-shadow: 0 0 15px rgba(76, 175, 80, 0.4);
+        }
+
+        .status-warning {
+            background: linear-gradient(45deg, #FF9800, #FFC107);
+            box-shadow: 0 0 15px rgba(255, 152, 0, 0.4);
+        }
+
+        .status-danger {
+            background: linear-gradient(45deg, #F44336, #E91E63);
+            box-shadow: 0 0 15px rgba(244, 67, 54, 0.4);
+        }
+
+        @keyframes statusPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        .site-status-text {
+            flex: 1;
+        }
+
+        .site-title {
+            font-weight: 600;
+            font-size: 16px;
+            margin-bottom: 4px;
+        }
+
+        .site-confidence {
+            font-size: 12px;
+            opacity: 0.8;
+        }
+
+        .site-url {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-family: 'Courier New', monospace;
+            word-break: break-all;
+            margin-top: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        /* Scanner section */
+        .scanner-section {
+            padding: 20px;
+        }
+
+        .scanner-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .scanner-input-container {
+            position: relative;
+            margin-bottom: 15px;
+        }
+
+        .scanner-input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .scanner-input:focus {
+            outline: none;
+            border-color: rgba(255, 255, 255, 0.5);
+            background: rgba(255, 255, 255, 0.15);
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
+        }
+
+        .scanner-input::placeholder {
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .scan-button {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 12px;
+            background: linear-gradient(45deg, #4CAF50, #8BC34A);
+            color: white;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
+        }
+
+        .scan-button:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(76, 175, 80, 0.4);
+        }
+
+        .scan-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .scan-button .spinner {
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Statistics section */
+        .stats-section {
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.1);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .stats-title {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            text-align: center;
+            opacity: 0.9;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 15px 10px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .stat-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .stat-value {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 5px;
+            background: linear-gradient(45deg, #4ecdc4, #44a08d);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .stat-label {
+            font-size: 11px;
+            opacity: 0.8;
+            line-height: 1.2;
+        }
+
+        /* Action buttons */
+        .action-buttons {
+            padding: 20px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .action-btn {
+            flex: 1;
+            padding: 10px 15px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.05);
+            color: white;
+            text-decoration: none;
+            font-size: 12px;
+            font-weight: 600;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+        }
+
+        .action-btn:hover {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: rgba(255, 255, 255, 0.4);
+            transform: translateY(-1px);
+        }
+
+        .action-btn svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        /* Scan result */
+        .scan-result {
+            margin-top: 15px;
+            padding: 15px;
+            border-radius: 10px;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        .scan-result.safe {
+            background: rgba(76, 175, 80, 0.2);
+            border: 1px solid rgba(76, 175, 80, 0.4);
+        }
+
+        .scan-result.warning {
+            background: rgba(255, 152, 0, 0.2);
+            border: 1px solid rgba(255, 152, 0, 0.4);
+        }
+
+        .scan-result.danger {
+            background: rgba(244, 67, 54, 0.2);
+            border: 1px solid rgba(244, 67, 54, 0.4);
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .result-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .result-icon {
+            width: 20px;
+            height: 20px;
+        }
+
+        .result-title {
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .result-confidence {
+            font-size: 11px;
+            opacity: 0.8;
+            margin-left: auto;
+        }
+
+        .result-message {
+            font-size: 12px;
+            line-height: 1.4;
+            opacity: 0.9;
+        }
+
+        /* Error state */
+        .error-message {
+            background: rgba(244, 67, 54, 0.2);
+            border: 1px solid rgba(244, 67, 54, 0.4);
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 12px;
+            margin-top: 10px;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        /* Footer */
+        .footer {
+            padding: 15px 20px;
+            text-align: center;
+            background: rgba(0, 0, 0, 0.2);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .footer-text {
+            font-size: 11px;
+            opacity: 0.7;
+            margin: 0;
+        }
+
+        /* Loading state */
+        .loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(5px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            gap: 15px;
+            z-index: 1000;
+        }
+
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        .loading-text {
+            font-size: 14px;
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body>
+    <!-- Background decoration -->
+    <div class="bg-decoration bg-orb"></div>
+    <div class="bg-decoration bg-orb"></div>
+    <div class="bg-decoration bg-orb"></div>
+
+    <!-- Header -->
+    <div class="header">
+        <div class="logo">🛡️</div>
+        <h1 class="app-title">Phishing Detector</h1>
+        <div class="version">v2.0.0 - AI Powered</div>
+    </div>
+
+    <!-- Current Site Status -->
+    <div class="current-site">
+        <div class="site-header">
+            <div id="status-indicator" class="status-indicator status-safe">✓</div>
+            <div class="site-status-text">
+                <div id="site-title" class="site-title">Checking current site...</div>
+                <div id="site-confidence" class="site-confidence">Analyzing...</div>
+            </div>
+        </div>
+        <div id="site-url" class="site-url">Loading...</div>
+    </div>
+
+    <!-- Scanner Section -->
+    <div class="scanner-section">
+        <h2 class="scanner-title">🔍 Scan Any URL</h2>
+        <div class="scanner-input-container">
+            <input 
+                type="url" 
+                id="url-input" 
+                class="scanner-input" 
+                placeholder="https://example.com"
+                autocomplete="off"
+            >
+        </div>
+        <button id="scan-button" class="scan-button">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 16px; height: 16px;">
+                <path d="M9 12l2 2 4-4"/>
+                <path d="M21 12c-1 0-3-1-3-3s2-3 3-3 3 1 3 3-2 3-3 3"/>
+                <path d="M3 12c1 0 3-1 3-3s-2-3-3-3-3 1-3 3 2 3 3 3"/>
+            </svg>
+            Scan URL
+        </button>
+        <div id="scan-result"></div>
+        <div id="error-message"></div>
+    </div>
+
+    <!-- Statistics -->
+    <div class="stats-section">
+        <h3 class="stats-title">Protection Statistics</h3>
+        <div class="stats-grid">
+            <div class="stat-item">
+                <div id="urls-scanned" class="stat-value">0</div>
+                <div class="stat-label">URLs Scanned Today</div>
+            </div>
+            <div class="stat-item">
+                <div id="threats-blocked" class="stat-value">0</div>
+                <div class="stat-label">Threats Blocked</div>
+            </div>
+            <div class="stat-item">
+                <div id="accuracy-rate" class="stat-value">99.9%</div>
+                <div class="stat-label">Accuracy Rate</div>
+            </div>
+            <div class="stat-item">
+                <div id="last-update" class="stat-value">Now</div>
+                <div class="stat-label">Last Update</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="action-buttons">
+        <button id="settings-btn" class="action-btn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="3"/>
+                <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/>
+            </svg>
+            Settings
+        </button>
+        <button id="history-btn" class="action-btn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M3 3v5h5"/>
+                <path d="M3.05 13a9 9 0 1 0 1.5-5.2L3 8"/>
+            </svg>
+            History
+        </button>
+        <button id="help-btn" class="action-btn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/>
+                <path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/>
+                <line x1="12" y1="17" x2="12.01" y2="17"/>
+            </svg>
+            Help
+        </button>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+        <p class="footer-text">Protected by AI-powered threat detection</p>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="loading-overlay" style="display: none;">
+        <div class="loading-spinner"></div>
+        <div class="loading-text">Analyzing URL...</div>
+    </div>
+
+    <script src="popup.js"></script>
+</body>
+</html>

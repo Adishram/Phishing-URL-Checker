@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Site Blocked - Phishing Detector</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #ff6b6b 0%, #ff8e53 100%);
+            color: white;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 40px;
+            text-align: center;
+            max-width: 600px;
+            width: 100%;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+            animation: slideIn 0.5s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .icon {
+            font-size: 80px;
+            margin-bottom: 20px;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.1);
+            }
+        }
+
+        h1 {
+            font-size: 32px;
+            margin-bottom: 15px;
+            font-weight: 700;
+        }
+
+        .subtitle {
+            font-size: 18px;
+            margin-bottom: 25px;
+            opacity: 0.9;
+            line-height: 1.5;
+        }
+
+        .url-info {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            padding: 15px;
+            margin: 20px 0;
+            word-break: break-all;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+        }
+
+        .reason-box {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 20px;
+            margin: 25px 0;
+            border-left: 4px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .reason-title {
+            font-weight: 600;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+
+        .reason-list {
+            text-align: left;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .reason-list li {
+            margin: 5px 0;
+            list-style: none;
+            position: relative;
+            padding-left: 20px;
+        }
+
+        .reason-list li::before {
+            content: "⚠️";
+            position: absolute;
+            left: 0;
+        }
+
+        .buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 30px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            min-width: 140px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn-primary {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .btn-danger {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .details-toggle {
+            margin-top: 20px;
+            font-size: 14px;
+            cursor: pointer;
+            opacity: 0.8;
+            text-decoration: underline;
+        }
+
+        .details-toggle:hover {
+            opacity: 1;
+        }
+
+        .technical-details {
+            display: none;
+            margin-top: 20px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+            padding: 15px;
+            font-size: 12px;
+            text-align: left;
+            opacity: 0.8;
+        }
+
+        .footer {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+            font-size: 12px;
+            opacity: 0.7;
+        }
+
+        .warning-badge {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
+            padding: 5px 15px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            display: inline-block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="warning-badge">SECURITY WARNING</div>
+        
+        <div class="icon">🛡️</div>
+        
+        <h1>Site Blocked for Your Protection</h1>
+        
+        <p class="subtitle" id="block-message">
+            This website has been identified as potentially dangerous and has been blocked to protect your personal information and device security.
+        </p>
+
+        <div class="url-info">
+            <strong>Blocked URL:</strong><br>
+            <span id="blocked-url">Loading...</span>
+        </div>
+
+        <div class="reason-box" id="reason-box" style="display: none;">
+            <div class="reason-title">Why was this site blocked?</div>
+            <ul class="reason-list" id="reason-list">
+                <!-- Reasons will be populated by JavaScript -->
+            </ul>
+        </div>
+
+        <div class="buttons">
+            <button class="btn btn-primary" onclick="goBack()">
+                ← Go to Safety
+            </button>
+            
+            <button class="btn btn-secondary" onclick="openSettings()">
+                ⚙️ Extension Settings
+            </button>
+            
+            <button class="btn btn-danger" onclick="continueAnyway()">
+                ⚠️ Continue Anyway
+            </button>
+        </div>
+
+        <div class="details-toggle" onclick="toggleDetails()">
+            Show Technical Details
+        </div>
+
+        <div class="technical-details" id="technical-details">
+            <strong>Detection Details:</strong><br>
+            Detection Time: <span id="detection-time">N/A</span><br>
+            Confidence Score: <span id="confidence-score">N/A</span><br>
+            Risk Level: <span id="risk-level">N/A</span><br>
+            Scanner Version: <span id="scanner-version">2.0.0</span><br>
+            <br>
+            <strong>What you can do:</strong><br>
+            • Go back to the previous page<br>
+            • Report this as a false positive<br>
+            • Check our extension settings<br>
+            • Contact the website directly to verify legitimacy
+        </div>
+
+        <div class="footer">
+            Protected by Phishing Detector Extension v2.0.0<br>
+            Your security is our priority
+        </div>
+    </div>
+
+    <script>
+        class BlockedPage {
+            constructor() {
+                this.blockedUrl = '';
+                this.blockReason = '';
+                this.detectionData = {};
+                
+                this.init();
+            }
+            
+            init() {
+                this.parseUrlParams();
+                this.updatePageContent();
+                this.loadDetectionData();
+            }
+            
+            parseUrlParams() {
+                const params = new URLSearchParams(window.location.search);
+                this.blockedUrl = params.get('url') || 'Unknown URL';
+                this.blockReason = params.get('message') || 'Site identified as potentially dangerous';
+                
+                document.getElementById('blocked-url').textContent = this.blockedUrl;
+                document.getElementById('block-message').textContent = this.blockReason;
+            }
+            
+            async loadDetectionData() {
+                try {
+                    // Try to get more detailed information about the detection
+                    const response = await chrome.runtime.sendMessage({
+                        type: 'getDetectionDetails',
+                        url: this.blockedUrl
+                    });
+                    
+                    if (response && response.success && response.data) {
+                        this.detectionData = response.data;
+                        this.updateTechnicalDetails();
+                        this.showReasons();
+                    }
+                } catch (error) {
+                    console.log('Could not load detection details:', error);
+                }
+            }
+            
+            updateTechnicalDetails() {
+                if (this.detectionData.timestamp) {
+                    document.getElementById('detection-time').textContent = 
+                        new Date(this.detectionData.timestamp).toLocaleString();
+                }
+                
+                if (this.detectionData.confidence) {
+                    document.getElementById('confidence-score').textContent = 
+                        Math.round(this.detectionData.confidence * 100) + '%';
+                }
+                
+                if (this.detectionData.risk_level) {
+                    document.getElementById('risk-level').textContent = this.detectionData.risk_level;
+                }
+            }
+            
+            showReasons() {
+                if (this.detectionData.reasons && this.detectionData.reasons.length > 0) {
+                    const reasonsList = document.getElementById('reason-list');
+                    const reasonBox = document.getElementById('reason-box');
+                    
+                    reasonsList.innerHTML = this.detectionData.reasons
+                        .map(reason => `<li>${reason}</li>`)
+                        .join('');
+                    
+                    reasonBox.style.display = 'block';
+                }
+            }
+            
+            updatePageContent() {
+                // Update page title
+                document.title = `Blocked: ${new URL(this.blockedUrl).hostname || 'Dangerous Site'} - Phishing Detector`;
+            }
+        }
+
+        // Global functions for button actions
+        function goBack() {
+            if (window.history.length > 1) {
+                window.history.back();
+            } else {
+                // Fallback to a safe page
+                window.location.href = 'chrome://newtab/';
+            }
+        }
+
+        function openSettings() {
+            chrome.runtime.openOptionsPage();
+        }
+
+        function continueAnyway() {
+            const confirmation = confirm(
+                "WARNING: You are about to visit a site that has been identified as potentially dangerous.\n\n" +
+                "This could lead to:\n" +
+                "• Identity theft\n" +
+                "• Malware installation\n" +
+                "• Financial loss\n" +
+                "• Data breaches\n\n" +
+                "Are you absolutely sure you want to continue?"
+            );
+
+            if (confirmation) {
+                const finalConfirmation = confirm(
+                    "Last warning: This site may steal your personal information.\n\n" +
+                    "Click OK only if you are certain this site is legitimate and you trust it completely."
+                );
+
+                if (finalConfirmation) {
+                    // Get the original URL and navigate to it
+                    const blockedPage = new BlockedPage();
+                    window.location.href = blockedPage.blockedUrl;
+                }
+            }
+        }
+
+        function toggleDetails() {
+            const details = document.getElementById('technical-details');
+            const toggle = document.querySelector('.details-toggle');
+            
+            if (details.style.display === 'none' || !details.style.display) {
+                details.style.display = 'block';
+                toggle.textContent = 'Hide Technical Details';
+            } else {
+                details.style.display = 'none';
+                toggle.textContent = 'Show Technical Details';
+            }
+        }
+
+        function reportFalsePositive() {
+            const email = 'your.email@example.com';
+            const subject = encodeURIComponent('False Positive Report - Phishing Detector');
+            const body = encodeURIComponent(
+                `I believe the following URL was incorrectly blocked:\n\n` +
+                `URL: ${new BlockedPage().blockedUrl}\n` +
+                `Date: ${new Date().toLocaleString()}\n` +
+                `Reason: I believe this site is legitimate because:\n\n` +
+                `[Please provide your reasoning here]\n\n` +
+                `Additional information:\n` +
+                `Browser: ${navigator.userAgent}\n` +
+                `Extension Version: 2.0.0`
+            );
+            
+            window.open(`mailto:${email}?subject=${subject}&body=${body}`);
+        }
+
+        // Initialize the blocked page
+        document.addEventListener('DOMContentLoaded', () => {
+            new BlockedPage();
+        });
+    </script>
+</body>
+</html>
